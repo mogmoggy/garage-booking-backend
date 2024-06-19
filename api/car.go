@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -32,7 +33,8 @@ func (server *Server) GetCarRegistration(ctx echo.Context) error {
 	carRegistration := ctx.Param("reg")
 
 	if carRegistration == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "no car registration was provided")
+		err := errors.New("reg param not provided")
+		return echo.NewHTTPError(http.StatusBadRequest, errorResponse(err))
 	}
 
 	carInfo, err := getCarInfoRequest(server.config.VesApiUrl, server.config.VesApiKey, carRegistration)
@@ -46,12 +48,12 @@ func (server *Server) GetCarRegistration(ctx echo.Context) error {
 func getCarInfoRequest(address, apiKey, carRegistration string) (*VesApiResponse, error) {
 	body, err := json.Marshal(map[string]string{"registrationNumber": carRegistration})
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to marshal json data")
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	request, err := http.NewRequest("POST", address+"/vehicle-enquiry/v1/vehicles", bytes.NewReader(body))
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to make new http request")
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, errorResponse(err))
 	}
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("x-api-key", apiKey)
@@ -59,21 +61,23 @@ func getCarInfoRequest(address, apiKey, carRegistration string) (*VesApiResponse
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "failed to get car info")
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode > 399 {
 		if response.StatusCode == 404 {
-			return nil, echo.NewHTTPError(response.StatusCode, errorResponse("failed find car with license plate: "+carRegistration))
+			err := errors.New("failed find car with license plate: " + carRegistration)
+			return nil, echo.NewHTTPError(response.StatusCode, errorResponse(err))
 		}
-		return nil, echo.NewHTTPError(response.StatusCode, errorResponse("failed to get car info"))
+		err := errors.New("failed to get car info")
+		return nil, echo.NewHTTPError(response.StatusCode, errorResponse(err))
 	}
 
 	responseBody := &VesApiResponse{}
 	if err = json.NewDecoder(response.Body).Decode(responseBody); err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, errorResponse("failed to decode json data from car info response"))
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	return responseBody, nil
