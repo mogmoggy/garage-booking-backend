@@ -19,9 +19,9 @@ jobs:
         image: postgres:alpine
         # Provide the password for postgres
         env:
-          POSTGRES_USER: root
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secret
-          POSTGRES_DB: simple_bank
+          POSTGRES_DB: safekab_garage
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
