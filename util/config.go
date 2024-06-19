@@ -2,18 +2,21 @@ package util
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	DBDriver          string `mapstructure:"DB_DRIVER"`
-	DBSource          string `mapstructure:"DB_SOURCE"`
-	ServerAddress     string `mapstructure:"SERVER_ADDRESS"`
-	VesApiUrl         string `mapstructure:"VES_API_URL"`
-	VesApiKey         string `mapstructure:"VES_API_KEY"`
-	AllowedOriginsStr string `mapstructure:"ALLOWED_ORIGINS"`
-	AllowedOrigins    []string
+	DBDriver            string        `mapstructure:"DB_DRIVER"`
+	DBSource            string        `mapstructure:"DB_SOURCE"`
+	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
+	VesApiUrl           string        `mapstructure:"VES_API_URL"`
+	VesApiKey           string        `mapstructure:"VES_API_KEY"`
+	AllowedOriginsStr   string        `mapstructure:"ALLOWED_ORIGINS"`
+	TokenSecret         string        `mapstructure:"TOKEN_SECRET"`
+	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	AllowedOrigins      []string
 }
 
 func LoadConfig(path string) (*Config, error) {
