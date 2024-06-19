@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: ci-test
+name: cli-test
 
 on:
   push:
@@ -10,20 +10,18 @@ on:
     branches: ["main"]
 
 jobs:
-  test:
-    name: test
+  build:
     runs-on: ubuntu-latest
-
     services:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres
+        image: postgres:alpine
         # Provide the password for postgres
         env:
-          POSTGRES_USER: postgres
+          POSTGRES_USER: root
           POSTGRES_PASSWORD: secret
-          POSTGRES_DB: safekab_garage
+          POSTGRES_DB: simple_bank
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -31,21 +29,19 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          # Maps tcp port 5432 on service container to the host
+          # Maps tcp port 5433 on service container to the host
           - 5430:5432
-
     steps:
+      - uses: actions/checkout@v3
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "1.22.0"
 
-      - name: Checkout code into go module directory
-        uses: actions/checkout@v4
-
-      - name: Install golang migrate
-        run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.1/migrate.darwin-amd64.tar.gz | tar xvz
+      - name: Install golang-migrate
+        run: | 
+          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz
           sudo mv migrate /usr/bin/
           which migrate
 
@@ -53,4 +49,4 @@ jobs:
         run: make migrateup
 
       - name: Test
-        run: make test
+        run: go test -v ./...
